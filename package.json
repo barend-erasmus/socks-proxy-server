@@ -1,0 +1,27 @@
+{
+  "name": "socks-proxy-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "gulp build & tsc",
+    "lint": "tslint ./src/**/*.ts --fix --exclude ./src/**/*.d.ts",
+    "start": "npm run build & node ./dist/app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/barend-erasmus/socks-proxy-server.git"
+  },
+  "author": "Barend Erasmus",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/barend-erasmus/socks-proxy-server/issues"
+  },
+  "homepage": "https://github.com/barend-erasmus/socks-proxy-server#readme",
+  "devDependencies": {
+    "@types/node": "^10.1.3",
+    "gulp": "^3.9.1",
+    "gulp-clean": "^0.4.0",
+    "run-sequence": "^2.2.1"
+  }
+}

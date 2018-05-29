@@ -1,0 +1,16 @@
+{
+  "extends": "tslint:latest",
+  "defaultSeverity": "error",
+  "rules": {   
+    "max-line-length": [true, 500],
+    "member-ordering": [false, {"order": ["private-instance-field", "protected-instance-field", "public-instance-field", "public-constructor", "public-instance-method", "protected-instance-method", "private-instance-method", "private-static-field", "protected-static-field", "public-static-field", "private-static-method", "protected-static-method", "public-static-method"]}],
+    "no-console": false,
+    "no-empty": false,
+    "no-empty-interface": false,
+    "no-implicit-dependencies": false,
+    "no-string-literal": false,
+    "no-object-literal-type-assertion": false,
+    "no-unused-expression": false,
+    "quotemark": [true, "single"]
+  }
+}
