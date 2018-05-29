@@ -1,3 +1,4 @@
+import * as dns from 'dns';
 import * as net from 'net';
 import { AddressType } from './enums/address-type';
 import { AuthenticationMethod } from './enums/authentication-method';
@@ -57,7 +58,11 @@ export class Connection {
     protected connectTCPIPStream(addressType: number, ipAddress: string, ipAddressBytes: number[], port: number, portBytes: number[], version: number): void {
         this.destinationSocket = new net.Socket();
 
-        this.destinationSocket.connect(port, ipAddress, () => {
+        this.destinationSocket.connect(port, ipAddress, (error: Error) => {
+            if (error) {
+                console.log(error);
+            }
+
             this.connected = true;
 
             this.sendConnectionResponse(addressType, ipAddressBytes, portBytes, version);
@@ -86,7 +91,7 @@ export class Connection {
         });
     }
 
-    protected handleConnectionRequest(data: Buffer): void {
+    protected async handleConnectionRequest(data: Buffer): Promise<void> {
         const version: number = data[0];
 
         if (version !== Version.VERSION_5) {
@@ -101,17 +106,25 @@ export class Connection {
         let ipAddressBytes: number[] = null;
         let ipAddress: string = null;
 
-        const portBytes: number[] = [data[8], data[9]];
-        const port: number = HexadecimalHelper.toDecimal(portBytes);
+        let portBytes: number[] = null;
+        let port: number = null;
 
         if (addressType === AddressType.DOMAIN_NAME) {
-            console.log(`Unsupported Address Type`);
-            return;
+            const domainNameLength: number = data[4];
+            const domainName: string = data.slice(5, 5 + domainNameLength).toString();
+
+            ipAddress = await this.resolveDomainName(domainName);
+
+            portBytes = [data[5 + domainNameLength], data[5 + domainNameLength + 1]];
+            port = HexadecimalHelper.toDecimal(portBytes);
         } else if (addressType === AddressType.IPv4) {
             ipAddressBytes = [data[4], data[5], data[6], data[7]];
             ipAddress = `${ipAddressBytes[0]}.${ipAddressBytes[1]}.${ipAddressBytes[2]}.${ipAddressBytes[3]}`;
+
+            portBytes = [data[8], data[9]];
+            port = HexadecimalHelper.toDecimal(portBytes);
         } else if (addressType === AddressType.IPv6) {
-            console.log(`Unsupported Address Type`);
+            console.log(`Unsupported Address Type of '${addressType}'`);
             return;
         }
 
@@ -129,6 +142,12 @@ export class Connection {
                 console.log(`Unsupported Command Code`);
                 return;
         }
+
+        console.log(`Version: ${version}`);
+        console.log(`Command Code: ${commandCode}`);
+        console.log(`Address Type: ${addressType}`);
+        console.log(`IP Address: ${ipAddress}`);
+        console.log(`Port: ${port}`);
     }
 
     protected handleGreetingRequest(data: Buffer): void {
@@ -148,6 +167,19 @@ export class Connection {
         this.socket.write(Buffer.from(responseBytes));
 
         this.geetingResponseSent = true;
+    }
+
+    protected resolveDomainName(domainName: string): Promise<string> {
+        return new Promise((resolve: (ipAddress: string) => void, reject: (error: Error) => void) => {
+            dns.resolve(domainName, (error: Error, addresses: string[]) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+
+                resolve(addresses[0]);
+            });
+        });
     }
 
     protected sendConnectionResponse(addressType: number, ipAddressBytes: number[], portBytes: number[], version: number): void {
