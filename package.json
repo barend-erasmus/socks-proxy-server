@@ -1,6 +1,6 @@
 {
   "name": "socks-proxy-server",
-  "version": "1.0.4",
+  "version": "1.0.6",
   "description": "SOCKS Proxy Server written in node.js",
   "scripts": {
     "build": "gulp build & tsc",
@@ -22,11 +22,11 @@
     "@types/winston": "^2.3.9",
     "gulp": "^3.9.1",
     "gulp-clean": "^0.4.0",
-    "js-yaml": "^3.11.0",
     "run-sequence": "^2.2.1"
   },
   "dependencies": {
     "commander": "^2.15.1",
+    "js-yaml": "^3.11.0",
     "winston": "^2.4.2",
     "winston-daily-rotate-file": "^3.2.0",
     "winston-loggly": "^1.3.1",

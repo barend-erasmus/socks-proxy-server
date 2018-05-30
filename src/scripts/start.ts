@@ -15,9 +15,8 @@ export function start(allowedIPAddresses: string[], deniedIPAddresses: string[],
             datePattern: 'YYYY-MM-DD-HH',
             filename: path.join(log, 'socks-proxy-server-%DATE%.log'),
             json: true,
-            maxFiles: '10d',
-            maxSize: '50m',
-            zippedArchive: true,
+            maxFiles: '30d',
+            maxSize: '20m',
         });
 
         // winston.add(winston.transports.Loggly, {

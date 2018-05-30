@@ -8,7 +8,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/socks-proxy-server --log /var/log
+ExecStart=/usr/bin/socks-proxy-server start --log /var/log/socks-proxy-server
 Restart=on-failure
 
 [Install]
