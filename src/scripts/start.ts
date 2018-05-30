@@ -14,7 +14,7 @@ export function start(hostname: string, log: string, port: number) {
             filename: path.join(log, 'socks-proxy-server-%DATE%.log'),
             json: true,
             maxFiles: '10d',
-            maxSize: '5m',
+            maxSize: '50m',
             zippedArchive: true,
         });
     }
