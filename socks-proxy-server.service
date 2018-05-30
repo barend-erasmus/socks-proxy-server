@@ -1,0 +1,11 @@
+[Unit]
+Description=SOCKS Proxy Server written in node.js
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/socks-proxy-server
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

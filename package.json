@@ -23,5 +23,8 @@
     "gulp": "^3.9.1",
     "gulp-clean": "^0.4.0",
     "run-sequence": "^2.2.1"
+  },
+  "dependencies": {
+    "commander": "^2.15.1"
   }
 }
