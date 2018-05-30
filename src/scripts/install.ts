@@ -1,3 +1,7 @@
+import * as fs from 'fs';
+
+export function install(): void {
+    fs.writeFileSync('/lib/systemd/system/socks-proxy-server.service', `
 [Unit]
 Description=SOCKS Proxy Server written in node.js
 After=network.target
@@ -9,3 +13,5 @@ Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target
+`);
+}

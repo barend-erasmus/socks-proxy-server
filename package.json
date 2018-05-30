@@ -1,11 +1,11 @@
 {
   "name": "socks-proxy-server",
-  "version": "0.0.2",
+  "version": "1.0.1",
   "description": "SOCKS Proxy Server written in node.js",
   "scripts": {
     "build": "gulp build & tsc",
     "lint": "tslint ./src/**/*.ts --fix --exclude ./src/**/*.d.ts",
-    "start": "npm run build & node ./dist/app.js --log ./log.file"
+    "start": "npm run build & node ./dist/app.js start --log ./ --port 1080"
   },
   "repository": {
     "type": "git",
@@ -25,7 +25,9 @@
     "run-sequence": "^2.2.1"
   },
   "dependencies": {
+    "commander": "^2.15.1",
     "winston": "^2.4.2",
+    "winston-daily-rotate-file": "^3.2.0",
     "yargs": "^11.0.0"
   },
   "bin": {

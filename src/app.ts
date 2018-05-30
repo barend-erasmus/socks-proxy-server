@@ -1,26 +1,20 @@
-import * as net from 'net';
-import * as winston from 'winston';
-import * as yargs from 'yargs';
-import { Connection } from './connection';
-import { Statistics } from './statistics';
+import * as commander from 'commander';
+import { install } from './scripts/install';
+import { start } from './scripts/start';
 
-const argv = yargs.argv;
+commander
+    .command('install')
+    .action((command: any) => {
+        install();
+    });
 
-if (argv.log) {
-    winston.add(winston.transports.File, { filename: argv.log });
-}
+commander
+    .command('start')
+    .option('-h --hostname <hostname>', 'Hostname')
+    .option('-l --log <log>', 'Log')
+    .option('-p --port <port>', 'Port')
+    .action((command: any) => {
+        start(command.hostname, command.log, command.port ? parseInt(command.port, 10) : null);
+    });
 
-const statistics: Statistics = new Statistics(argv.log ? true : false);
-
-const server: net.Server = net.createServer(onConnection);
-
-const hostname: string = argv.hostname ? argv.hostname : '0.0.0.0';
-const port: number = argv.port ? argv.port : 1337;
-
-server.listen(port, hostname, () => {
-    winston.info(`Listening on ${hostname}:${port}`);
-});
-
-function onConnection(socket: net.Socket): void {
-    const connection: Connection = new Connection(socket, statistics);
-}
+commander.parse(process.argv);

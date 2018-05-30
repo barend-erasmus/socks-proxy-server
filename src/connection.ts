@@ -55,9 +55,9 @@ export class Connection {
 
         this.clientSocket.on('error', (error: Error) => {
             winston.info(`Client failed`, {
-                error,
                 clientAddress: this.clientAddress,
                 clientPort: this.clientPort,
+                error,
             });
 
             this.close();
@@ -97,12 +97,12 @@ export class Connection {
 
         this.destinationSocket.connect(port, ipAddress, (error: Error) => {
             if (error) {
-                winston.info(`Destination failed to connect`, {
-                    error,
+                winston.error(`Destination failed to connect`, {
                     clientAddress: this.clientAddress,
                     clientPort: this.clientPort,
                     destinationAddress: ipAddress,
                     destinationPort: port,
+                    error,
                 });
 
                 this.close();
@@ -151,11 +151,11 @@ export class Connection {
 
         this.destinationSocket.on('error', (error: Error) => {
             winston.info(`Destination failed`, {
-                error,
                 clientAddress: this.clientAddress,
                 clientPort: this.clientPort,
                 destinationAddress: ipAddress,
                 destinationPort: port,
+                error,
             });
 
             this.close();
