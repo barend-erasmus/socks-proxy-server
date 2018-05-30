@@ -1,1 +1,1 @@
-# socks-proxy-server
+# SOCKS Proxy Server

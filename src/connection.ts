@@ -1,13 +1,19 @@
 import * as dns from 'dns';
 import * as net from 'net';
+import * as winston from 'winston';
 import { AddressType } from './enums/address-type';
 import { AuthenticationMethod } from './enums/authentication-method';
 import { CommandCode } from './enums/command-code';
 import { ConnectionStatus } from './enums/connection-status';
 import { Version } from './enums/version';
 import { HexadecimalHelper } from './helpers/hexadecimal';
+import { Statistics } from './statistics';
 
 export class Connection {
+
+    protected clientAddress: string = null;
+
+    protected clientPort: number = null;
 
     protected connected: boolean = false;
 
@@ -15,32 +21,51 @@ export class Connection {
 
     protected destinationSocket: net.Socket = null;
 
-    protected geetingResponseSent: boolean = false;
+    protected greetingResponseSent: boolean = false;
 
-    constructor(protected socket: net.Socket) {
-        this.socket.on('close', () => {
-            if (this.socket) {
-                this.socket.destroy();
-                this.socket = null;
-            }
+    constructor(protected clientSocket: net.Socket, protected statistics: Statistics) {
+        this.clientAddress = this.clientSocket.remoteAddress;
+        this.clientPort = this.clientSocket.remotePort;
 
-            if (this.destinationSocket) {
-                this.destinationSocket.destroy();
-                this.destinationSocket = null;
-            }
+        winston.info(`Client connected`, {
+            clientAddress: this.clientAddress,
+            clientPort: this.clientPort,
         });
 
-        this.socket.on('data', (data: Buffer) => {
+        this.clientSocket.on('close', () => {
+            winston.info(`Client disconnected`, {
+                clientAddress: this.clientAddress,
+                clientPort: this.clientPort,
+            });
+
+            this.close();
+        });
+
+        this.clientSocket.on('data', (data: Buffer) => {
             this.onData(data);
+
+            winston.info(`Client sending data`, {
+                bytes: data.length,
+                clientAddress: this.clientAddress,
+                clientPort: this.clientPort,
+            });
+
+            this.statistics.incrementSent(data.length);
         });
 
-        this.socket.on('error', (error: Error) => {
+        this.clientSocket.on('error', (error: Error) => {
+            winston.info(`Client failed`, {
+                error,
+                clientAddress: this.clientAddress,
+                clientPort: this.clientPort,
+            });
 
+            this.close();
         });
     }
 
     public onData(data: Buffer): void {
-        if (!this.geetingResponseSent) {
+        if (!this.greetingResponseSent) {
             this.handleGreetingRequest(data);
             return;
         }
@@ -55,39 +80,85 @@ export class Connection {
         }
     }
 
+    protected close(): void {
+        if (this.clientSocket) {
+            this.clientSocket.destroy();
+            this.clientSocket = null;
+        }
+
+        if (this.destinationSocket) {
+            this.destinationSocket.destroy();
+            this.destinationSocket = null;
+        }
+    }
+
     protected connectTCPIPStream(addressType: number, ipAddress: string, ipAddressBytes: number[], port: number, portBytes: number[], version: number): void {
         this.destinationSocket = new net.Socket();
 
         this.destinationSocket.connect(port, ipAddress, (error: Error) => {
             if (error) {
-                console.log(error);
+                winston.info(`Destination failed to connect`, {
+                    error,
+                    clientAddress: this.clientAddress,
+                    clientPort: this.clientPort,
+                    destinationAddress: ipAddress,
+                    destinationPort: port,
+                });
+
+                this.close();
+
+                return;
             }
 
             this.connected = true;
 
             this.sendConnectionResponse(addressType, ipAddressBytes, portBytes, version);
+
+            winston.info(`Destination connected`, {
+                clientAddress: this.clientAddress,
+                clientPort: this.clientPort,
+                destinationAddress: ipAddress,
+                destinationPort: port,
+            });
         });
 
         this.destinationSocket.on('close', () => {
-            if (this.destinationSocket) {
-                this.destinationSocket.destroy();
-                this.destinationSocket = null;
-            }
+            winston.info(`Destination disconnected`, {
+                clientAddress: this.clientAddress,
+                clientPort: this.clientPort,
+                destinationAddress: ipAddress,
+                destinationPort: port,
+            });
 
-            if (this.socket) {
-                this.socket.destroy();
-                this.socket = null;
-            }
+            this.close();
         });
 
         this.destinationSocket.on('data', (data: Buffer) => {
-            if (this.socket) {
-                this.socket.write(data);
+            if (this.clientSocket) {
+                this.clientSocket.write(data);
             }
+
+            winston.info(`Client receiving data`, {
+                bytes: data.length,
+                clientAddress: this.clientAddress,
+                clientPort: this.clientPort,
+                destinationAddress: ipAddress,
+                destinationPort: port,
+            });
+
+            this.statistics.incrementReceived(data.length);
         });
 
         this.destinationSocket.on('error', (error: Error) => {
+            winston.info(`Destination failed`, {
+                error,
+                clientAddress: this.clientAddress,
+                clientPort: this.clientPort,
+                destinationAddress: ipAddress,
+                destinationPort: port,
+            });
 
+            this.close();
         });
     }
 
@@ -95,7 +166,7 @@ export class Connection {
         const version: number = data[0];
 
         if (version !== Version.VERSION_5) {
-            console.log(`Unsupported Version`);
+            this.close();
             return;
         }
 
@@ -113,7 +184,12 @@ export class Connection {
             const domainNameLength: number = data[4];
             const domainName: string = data.slice(5, 5 + domainNameLength).toString();
 
-            ipAddress = await this.resolveDomainName(domainName);
+            try {
+                ipAddress = await this.resolveDomainName(domainName);
+            } catch {
+                this.close();
+                return;
+            }
 
             portBytes = [data[5 + domainNameLength], data[5 + domainNameLength + 1]];
             port = HexadecimalHelper.toDecimal(portBytes);
@@ -124,37 +200,40 @@ export class Connection {
             portBytes = [data[8], data[9]];
             port = HexadecimalHelper.toDecimal(portBytes);
         } else if (addressType === AddressType.IPv6) {
-            console.log(`Unsupported Address Type of '${addressType}'`);
+            // TODO:
+            this.close();
             return;
         }
 
         switch (commandCode) {
             case CommandCode.TCPIP_PORT_CONNECTION:
-                console.log(`Connect with TCPIP Port Connection`);
+                // TODO:
+                this.close();
                 break;
             case CommandCode.TCPIP_STREAM_CONNECTION:
                 this.connectTCPIPStream(addressType, ipAddress, ipAddressBytes, port, portBytes, version);
                 break;
             case CommandCode.UDP_PORT:
-                console.log(`Connect with UDP Port Connection`);
+                // TODO:
+                this.close();
                 break;
             default:
-                console.log(`Unsupported Command Code`);
+                this.close();
                 return;
         }
 
-        console.log(`Version: ${version}`);
-        console.log(`Command Code: ${commandCode}`);
-        console.log(`Address Type: ${addressType}`);
-        console.log(`IP Address: ${ipAddress}`);
-        console.log(`Port: ${port}`);
+        // console.log(`Version: ${version}`);
+        // console.log(`Command Code: ${commandCode}`);
+        // console.log(`Address Type: ${addressType}`);
+        // console.log(`IP Address: ${ipAddress}`);
+        // console.log(`Port: ${port}`);
     }
 
     protected handleGreetingRequest(data: Buffer): void {
         const version: number = data[0];
 
         if (version !== Version.VERSION_5) {
-            console.log(`Unsupported Version`);
+            this.close();
             return;
         }
 
@@ -164,9 +243,9 @@ export class Connection {
 
         const responseBytes: number[] = [version, AuthenticationMethod.NONE];
 
-        this.socket.write(Buffer.from(responseBytes));
+        this.clientSocket.write(Buffer.from(responseBytes));
 
-        this.geetingResponseSent = true;
+        this.greetingResponseSent = true;
     }
 
     protected resolveDomainName(domainName: string): Promise<string> {
@@ -174,8 +253,19 @@ export class Connection {
             dns.resolve(domainName, (error: Error, addresses: string[]) => {
                 if (error) {
                     reject(error);
+
+                    winston.info(`Failed to resolve domain name`, {
+                        domainName,
+                        error,
+                    });
+
                     return;
                 }
+
+                winston.info(`Resolved domain name`, {
+                    domainName,
+                    result: addresses[0],
+                });
 
                 resolve(addresses[0]);
             });
@@ -185,9 +275,10 @@ export class Connection {
     protected sendConnectionResponse(addressType: number, ipAddressBytes: number[], portBytes: number[], version: number): void {
         const responseBytes: number[] = [version, ConnectionStatus.GRANTED, 0x00, addressType].concat(ipAddressBytes).concat(portBytes);
 
-        this.socket.write(Buffer.from(responseBytes));
-
-        this.connectionResponseSent = true;
+        if (this.clientSocket) {
+            this.clientSocket.write(Buffer.from(responseBytes));
+            this.connectionResponseSent = true;
+        }
     }
 
 }
