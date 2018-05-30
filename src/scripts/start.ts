@@ -2,6 +2,8 @@ import * as net from 'net';
 import * as path from 'path';
 import * as winston from 'winston';
 import 'winston-daily-rotate-file';
+import 'winston-loggly';
+import * as logzioWinstonTransport from 'winston-logzio';
 import * as yargs from 'yargs';
 import { Connection } from './../connection';
 import { Statistics } from './../statistics';
@@ -16,6 +18,19 @@ export function start(hostname: string, log: string, port: number) {
             maxFiles: '10d',
             maxSize: '50m',
             zippedArchive: true,
+        });
+
+        // winston.add(winston.transports.Loggly, {
+        //     json: true,
+        //     subdomain: 'majuro',
+        //     tags: ['Winston-NodeJS'],
+        //     token: '898781b0-befb-48a2-a5f3-9ee51e393ab2',
+        // });
+
+        winston.add(logzioWinstonTransport, {
+            host: 'listener.logz.io',
+            token: 'sxvtIOCQGQPwRcETZMyRjfCrXSMyIgda',
+            type: 'socks-proxy-server',
         });
     }
 
