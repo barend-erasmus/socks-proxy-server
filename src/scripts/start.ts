@@ -8,7 +8,7 @@ import * as yargs from 'yargs';
 import { Connection } from './../connection';
 import { Statistics } from './../statistics';
 
-export function start(hostname: string, log: string, port: number) {
+export function start(allowedIPAddresses: string[], deniedIPAddresses: string[], hostname: string, log: string, port: number) {
     if (log) {
         // winston.add(winston.transports.File, { filename: log });
         winston.add(winston.transports.DailyRotateFile, {
@@ -32,11 +32,13 @@ export function start(hostname: string, log: string, port: number) {
             token: 'sxvtIOCQGQPwRcETZMyRjfCrXSMyIgda',
             type: 'socks-proxy-server',
         });
+
+        winston.remove(winston.transports.Console);
     }
 
     const statistics: Statistics = new Statistics(log ? true : false);
 
-    const server: net.Server = net.createServer((socket: net.Socket) => onConnection(socket, statistics));
+    const server: net.Server = net.createServer((socket: net.Socket) => onConnection(allowedIPAddresses, deniedIPAddresses, socket, statistics));
 
     hostname = hostname ? hostname : '0.0.0.0';
     port = port ? port : 1337;
@@ -46,6 +48,6 @@ export function start(hostname: string, log: string, port: number) {
     });
 }
 
-function onConnection(socket: net.Socket, statistics: Statistics): void {
-    const connection: Connection = new Connection(socket, statistics);
+function onConnection(allowedIPAddresses: string[], deniedIPAddresses: string[], socket: net.Socket, statistics: Statistics): void {
+    const connection: Connection = new Connection(allowedIPAddresses, socket, deniedIPAddresses, statistics);
 }

@@ -23,7 +23,12 @@ export class Connection {
 
     protected greetingResponseSent: boolean = false;
 
-    constructor(protected clientSocket: net.Socket, protected statistics: Statistics) {
+    constructor(
+        protected allowedIPAddresses: string[],
+        protected clientSocket: net.Socket,
+        protected deniedIPAddresses: string[],
+        protected statistics: Statistics,
+    ) {
         this.clientAddress = this.clientSocket.remoteAddress;
         this.clientPort = this.clientSocket.remotePort;
 
@@ -93,6 +98,20 @@ export class Connection {
     }
 
     protected connectTCPIPStream(addressType: number, ipAddress: string, ipAddressBytes: number[], port: number, portBytes: number[], version: number): void {
+        if (this.allowedIPAddresses) {
+            if (this.allowedIPAddresses.indexOf(ipAddress) === 0) {
+                this.sendConnectionResponse(addressType, ConnectionStatus.NOT_ALLOWED, ipAddressBytes, portBytes, version);
+                return;
+            }
+        }
+
+        if (this.deniedIPAddresses) {
+            if (this.deniedIPAddresses.indexOf(ipAddress) > -1) {
+                this.sendConnectionResponse(addressType, ConnectionStatus.NOT_ALLOWED, ipAddressBytes, portBytes, version);
+                return;
+            }
+        }
+
         this.destinationSocket = new net.Socket();
 
         this.destinationSocket.connect(port, ipAddress, (error: Error) => {
@@ -112,7 +131,7 @@ export class Connection {
 
             this.connected = true;
 
-            this.sendConnectionResponse(addressType, ipAddressBytes, portBytes, version);
+            this.sendConnectionResponse(addressType, ConnectionStatus.GRANTED, ipAddressBytes, portBytes, version);
 
             winston.info(`Destination connected`, {
                 clientAddress: this.clientAddress,
@@ -272,8 +291,8 @@ export class Connection {
         });
     }
 
-    protected sendConnectionResponse(addressType: number, ipAddressBytes: number[], portBytes: number[], version: number): void {
-        const responseBytes: number[] = [version, ConnectionStatus.GRANTED, 0x00, addressType].concat(ipAddressBytes).concat(portBytes);
+    protected sendConnectionResponse(addressType: number, connectionStatus: ConnectionStatus, ipAddressBytes: number[], portBytes: number[], version: number): void {
+        const responseBytes: number[] = [version, connectionStatus, 0x00, addressType].concat(ipAddressBytes).concat(portBytes);
 
         if (this.clientSocket) {
             this.clientSocket.write(Buffer.from(responseBytes));
