@@ -26,13 +26,13 @@ export function start(allowedIPAddresses: string[], deniedIPAddresses: string[],
         //     token: '898781b0-befb-48a2-a5f3-9ee51e393ab2',
         // });
 
-        winston.add(logzioWinstonTransport, {
-            host: 'listener.logz.io',
-            token: 'sxvtIOCQGQPwRcETZMyRjfCrXSMyIgda',
-            type: 'socks-proxy-server',
-        });
+        // winston.add(logzioWinstonTransport, {
+        //     host: 'listener.logz.io',
+        //     token: 'sxvtIOCQGQPwRcETZMyRjfCrXSMyIgda',
+        //     type: 'socks-proxy-server',
+        // });
 
-        winston.remove(winston.transports.Console);
+        // winston.remove(winston.transports.Console);
     }
 
     const statistics: Statistics = new Statistics(log ? true : false);

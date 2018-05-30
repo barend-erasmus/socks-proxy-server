@@ -124,6 +124,8 @@ export class Connection {
                     error,
                 });
 
+                this.sendConnectionResponse(addressType, ConnectionStatus.HOST_UNREACHABLE, ipAddressBytes, portBytes, version);
+
                 this.close();
 
                 return;
@@ -206,6 +208,7 @@ export class Connection {
             try {
                 ipAddress = await this.resolveDomainName(domainName);
             } catch {
+                this.sendConnectionResponse(addressType, ConnectionStatus.HOST_UNREACHABLE, ipAddressBytes, portBytes, version);
                 this.close();
                 return;
             }
@@ -219,33 +222,28 @@ export class Connection {
             portBytes = [data[8], data[9]];
             port = HexadecimalHelper.toDecimal(portBytes);
         } else if (addressType === AddressType.IPv6) {
-            // TODO:
+            this.sendConnectionResponse(addressType, ConnectionStatus.ADDRESS_TYPE_NOT_SUPPORTED, ipAddressBytes, portBytes, version);
             this.close();
             return;
         }
 
         switch (commandCode) {
             case CommandCode.TCPIP_PORT_CONNECTION:
-                // TODO:
+                this.sendConnectionResponse(addressType, ConnectionStatus.COMMAND_NOT_SUPPORTED, ipAddressBytes, portBytes, version);
                 this.close();
                 break;
             case CommandCode.TCPIP_STREAM_CONNECTION:
                 this.connectTCPIPStream(addressType, ipAddress, ipAddressBytes, port, portBytes, version);
                 break;
             case CommandCode.UDP_PORT:
-                // TODO:
+                this.sendConnectionResponse(addressType, ConnectionStatus.COMMAND_NOT_SUPPORTED, ipAddressBytes, portBytes, version);
                 this.close();
                 break;
             default:
+                this.sendConnectionResponse(addressType, ConnectionStatus.COMMAND_NOT_SUPPORTED, ipAddressBytes, portBytes, version);
                 this.close();
                 return;
         }
-
-        // console.log(`Version: ${version}`);
-        // console.log(`Command Code: ${commandCode}`);
-        // console.log(`Address Type: ${addressType}`);
-        // console.log(`IP Address: ${ipAddress}`);
-        // console.log(`Port: ${port}`);
     }
 
     protected handleGreetingRequest(data: Buffer): void {
