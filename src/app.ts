@@ -22,9 +22,24 @@ commander
 
             const yamlConfig: any = yaml.safeLoad(yamlContents);
 
-            start(yamlConfig.allow, yamlConfig.deny, yamlConfig.hostname, yamlConfig.log, yamlConfig.port ? yamlConfig.port : null);
+            start(
+                yamlConfig.allow,
+                yamlConfig.deny,
+                yamlConfig.hostname,
+                yamlConfig.log,
+                yamlConfig.port ? yamlConfig.port : null,
+                yamlConfig.requiresUsernamePasswordAuthentication,
+                yamlConfig.userNamePasswordPairs,
+            );
         } else {
-            start(null, null, command.hostname, command.log, command.port ? parseInt(command.port, 10) : null);
+            start(
+                null,
+                null,
+                command.hostname,
+                command.log,
+                command.port ? parseInt(command.port, 10) : null,
+                false,
+                null);
         }
     });
 

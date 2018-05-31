@@ -3,6 +3,7 @@ import * as net from 'net';
 import * as winston from 'winston';
 import { AddressType } from './enums/address-type';
 import { AuthenticationMethod } from './enums/authentication-method';
+import { AuthenticationStatus } from './enums/authentication-status';
 import { CommandCode } from './enums/command-code';
 import { ConnectionStatus } from './enums/connection-status';
 import { Version } from './enums/version';
@@ -10,6 +11,10 @@ import { HexadecimalHelper } from './helpers/hexadecimal';
 import { Statistics } from './statistics';
 
 export class Connection {
+
+    protected authenticationMethod: AuthenticationMethod = null;
+
+    protected authenticationResponseSent: boolean = false;
 
     protected clientAddress: string = null;
 
@@ -24,9 +29,11 @@ export class Connection {
     protected greetingResponseSent: boolean = false;
 
     constructor(
+        protected authenticateFn: (password: string, userName: string) => boolean,
         protected allowedIPAddresses: string[],
         protected clientSocket: net.Socket,
         protected deniedIPAddresses: string[],
+        protected requiresUsernamePasswordAuthentication: boolean,
         protected statistics: Statistics,
     ) {
         this.clientAddress = this.clientSocket.remoteAddress;
@@ -73,6 +80,13 @@ export class Connection {
         if (!this.greetingResponseSent) {
             this.handleGreetingRequest(data);
             return;
+        }
+
+        if (this.authenticationMethod === AuthenticationMethod.USERNAME_PASSWORD) {
+            if (!this.authenticationResponseSent) {
+                this.handleAuthenticationRequest(data);
+                return;
+            }
         }
 
         if (!this.connectionResponseSent) {
@@ -183,6 +197,27 @@ export class Connection {
         });
     }
 
+    protected handleAuthenticationRequest(data: Buffer): void {
+        const version: number = data[0];
+
+        const userNameLength: number = data[1];
+
+        const userName: string = data.slice(2, 2 + userNameLength).toString();
+
+        const passwordLength: number = data[2 + userNameLength];
+
+        const password: string = data.slice(2 + userNameLength + 1, 2 + userNameLength + 1 + passwordLength).toString();
+
+        const authenticationStatus: AuthenticationStatus =
+            this.authenticateFn(password, userName) ? AuthenticationStatus.SUCCESS : AuthenticationStatus.FAILED;
+
+        const responseBytes: number[] = [version, authenticationStatus];
+
+        this.clientSocket.write(Buffer.from(responseBytes));
+
+        this.authenticationResponseSent = true;
+    }
+
     protected async handleConnectionRequest(data: Buffer): Promise<void> {
         const version: number = data[0];
 
@@ -254,11 +289,9 @@ export class Connection {
             return;
         }
 
-        const authenticationMethod: number = data[1];
+        this.authenticationMethod = this.requiresUsernamePasswordAuthentication ? AuthenticationMethod.USERNAME_PASSWORD : data[2];
 
-        const authenticationMethodVariableLength: number = data[2];
-
-        const responseBytes: number[] = [version, AuthenticationMethod.NONE];
+        const responseBytes: number[] = [version, this.authenticationMethod];
 
         this.clientSocket.write(Buffer.from(responseBytes));
 

@@ -8,10 +8,10 @@ export class HexadecimalHelper {
                 result = arr[index] * Math.pow(256, arr.length - index - 1);
                 continue;
             }
-    
+
             result += arr[index] * Math.pow(256, arr.length - index - 1);
         }
-    
+
         return result;
     }
 

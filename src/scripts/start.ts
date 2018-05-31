@@ -5,10 +5,19 @@ import 'winston-daily-rotate-file';
 import 'winston-loggly';
 import * as logzioWinstonTransport from 'winston-logzio';
 import * as yargs from 'yargs';
+import { AuthenticationMethod } from '../enums/authentication-method';
 import { Connection } from './../connection';
 import { Statistics } from './../statistics';
 
-export function start(allowedIPAddresses: string[], deniedIPAddresses: string[], hostname: string, log: string, port: number) {
+export function start(
+    allowedIPAddresses: string[],
+    deniedIPAddresses: string[],
+    hostname: string,
+    log: string,
+    port: number,
+    requiresUserNamePasswordAuthentication: boolean,
+    userNamePasswordPairs: string[][],
+) {
     if (log) {
         // winston.add(winston.transports.File, { filename: log });
         winston.add(winston.transports.DailyRotateFile, {
@@ -37,7 +46,15 @@ export function start(allowedIPAddresses: string[], deniedIPAddresses: string[],
 
     const statistics: Statistics = new Statistics(log ? true : false);
 
-    const server: net.Server = net.createServer((socket: net.Socket) => onConnection(allowedIPAddresses, deniedIPAddresses, socket, statistics));
+    const server: net.Server = net.createServer((socket: net.Socket) =>
+        onConnection(
+            allowedIPAddresses,
+            deniedIPAddresses,
+            requiresUserNamePasswordAuthentication,
+            socket,
+            statistics,
+            userNamePasswordPairs,
+        ));
 
     hostname = hostname ? hostname : '0.0.0.0';
     port = port ? port : 1337;
@@ -47,6 +64,29 @@ export function start(allowedIPAddresses: string[], deniedIPAddresses: string[],
     });
 }
 
-function onConnection(allowedIPAddresses: string[], deniedIPAddresses: string[], socket: net.Socket, statistics: Statistics): void {
-    const connection: Connection = new Connection(allowedIPAddresses, socket, deniedIPAddresses, statistics);
+function onConnection(
+    allowedIPAddresses: string[],
+    deniedIPAddresses: string[],
+    requiresUserNamePasswordAuthentication: boolean,
+    socket: net.Socket,
+    statistics: Statistics,
+    userNamePasswordPairs: string[][],
+): void {
+    const connection: Connection = new Connection((password: string, userName: string) => {
+        if (!requiresUserNamePasswordAuthentication) {
+            return true;
+        }
+
+        if (!userNamePasswordPairs) {
+            return false;
+        }
+
+        for (const userNamePasswordPair of userNamePasswordPairs) {
+            if (userNamePasswordPair[0] === userName && userNamePasswordPair[1] === password) {
+                return true;
+            }
+        }
+
+        return false;
+    }, allowedIPAddresses, socket, deniedIPAddresses, requiresUserNamePasswordAuthentication, statistics);
 }
