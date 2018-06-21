@@ -1,4 +1,4 @@
-export enum CommandCode {
+export enum SOCKSProxyCommandCode {
 
     TCPIP_STREAM_CONNECTION = 0x01,
 

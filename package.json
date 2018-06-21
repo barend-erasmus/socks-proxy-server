@@ -27,6 +27,7 @@
   "dependencies": {
     "commander": "^2.15.1",
     "js-yaml": "^3.11.0",
+    "uuid": "^3.2.1",
     "winston": "^2.4.2",
     "winston-daily-rotate-file": "^3.2.0"
   },

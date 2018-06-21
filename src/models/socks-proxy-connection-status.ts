@@ -1,4 +1,4 @@
-export enum ConnectionStatus {
+export enum SOCKSProxyConnectionStatus {
 
     GRANTED = 0x00,
 
