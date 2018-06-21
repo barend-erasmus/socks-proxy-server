@@ -27,8 +27,8 @@ export async function install(): Promise<void> {
     const configuration: any = {
         allow: allow ? allow.split(',') : null,
         deny: deny ? deny.split(',') : null,
-        hostname: hostname ? hostname : '0.0.0.0',
-        log: log ? log : '/var/log/socks-proxy-server',
+        hostname: hostname || '0.0.0.0',
+        log: log || '/var/log/socks-proxy-server',
         port: port ? parseInt(port, 10) : 1337,
         requiresUsernamePasswordAuthentication: requiresUsernamePasswordAuthentication ? (requiresUsernamePasswordAuthentication === 'YES' ? true : requiresUsernamePasswordAuthentication === 'NO' ? false : false) : false,
         userNamePasswordPairs: userNamePasswordPairs ? userNamePasswordPairs.split(',').map((x: string) => x.split('|')) : null,
