@@ -1,6 +1,6 @@
 {
   "name": "socks-proxy-server",
-  "version": "1.0.13",
+  "version": "2.0.1",
   "description": "SOCKS Proxy Server written in node.js",
   "scripts": {
     "build": "gulp build & tsc",
