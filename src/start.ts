@@ -1,5 +1,5 @@
-import { IProxyServer } from '../interfaces/proxy-server';
-import { SOCKSProxyServer } from '../socks-proxy-server';
+import { IProxyServer } from './interfaces/proxy-server';
+import { SOCKSProxyServer } from './socks-proxy-server';
 
 export function start(
   allowedIPAddresses: string[],

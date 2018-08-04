@@ -1,7 +1,7 @@
 import * as commander from 'commander';
 import * as fs from 'fs';
 import * as yaml from 'js-yaml';
-import { start } from './scripts/start';
+import { start } from './start';
 
 commander
     .command('start')
