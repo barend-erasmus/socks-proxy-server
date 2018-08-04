@@ -13,7 +13,7 @@
 # - 185.60.219.38 # www.facebook.com
 # hostname: 0.0.0.0
 # log: D:/temp
-# port: 1080
+# port: 1337
 # requiresUsernamePasswordAuthentication: true
 # userNamePasswordPairs:
 # - - admin

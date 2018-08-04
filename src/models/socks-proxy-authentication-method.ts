@@ -1,4 +1,4 @@
-export enum AuthenticationMethod {
+export enum SOCKSProxyAuthenticationMethod {
 
     NONE = 0x00,
 

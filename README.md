@@ -14,7 +14,7 @@
 
 ### Usage
 
-`socks-proxy-server start --hostname 0.0.0.0  --port 1080`
+`socks-proxy-server start --hostname 0.0.0.0  --port 1337`
 
 ```
 Usage: start [options]
@@ -48,7 +48,7 @@ deny:
 - 185.60.219.35 # www.facebook.com
 - 185.60.219.38 # www.facebook.com
 hostname: 0.0.0.0
-port: 1080
+port: 1337
 requiresUsernamePasswordAuthentication: true
 userNamePasswordPairs:
 - - admin

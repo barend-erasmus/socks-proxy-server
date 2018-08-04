@@ -1,4 +1,4 @@
-export enum AddressType {
+export enum SOCKSProxyAddressType {
 
     IPv4 = 0x01,
 
