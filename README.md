@@ -1,22 +1,35 @@
 # SOCKS Proxy Server
 
-## Installation
+![Travis CI](https://api.travis-ci.org/barend-erasmus/socks-proxy-server.svg?branch=master)
+
+## Getting Started
+
+## Quick Install
+
+`curl -s https://raw.githubusercontent.com/barend-erasmus/socks-proxy-server/master/scripts/linux-systemd-install.sh | bash`
+
+### Installing
 
 `npm install -g socks-proxy-server`
 
-`socks-proxy-server install`
+### Usage
 
-`sudo systemctl daemon-reload`
+`socks-proxy-server start --hostname 0.0.0.0  --port 1080`
 
-`sudo systemctl enable socks-proxy-server`
+```
+Usage: start [options]
 
-`sudo systemctl start socks-proxy-server`
+  Options:
 
-## Running
+    -c --config <config>      Config
+    -h --hostname <hostname>  Hostname
+    -p --port <port>          Port
+    -h, --help                output usage information
+```
 
-`socks-proxy-server start --hostname 0.0.0.0 --log ./ --port 1337`
+### Uninstalling
 
-`socks-proxy-server start --config my-config.yaml`
+`npm uninstall -g socks-proxy-server`
 
 **Example**
 
@@ -35,7 +48,6 @@ deny:
 - 185.60.219.35 # www.facebook.com
 - 185.60.219.38 # www.facebook.com
 hostname: 0.0.0.0
-log: D:/temp
 port: 1080
 requiresUsernamePasswordAuthentication: true
 userNamePasswordPairs:

@@ -1,0 +1,9 @@
+[Unit]
+Description=WSMQ Service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/socks-proxy-server start --port 8080
+
+[Install]
+WantedBy=multi-user.target

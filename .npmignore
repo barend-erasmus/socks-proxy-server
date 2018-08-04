@@ -1,0 +1,13 @@
+scripts
+
+src
+
+.gitignore
+
+.travis.yml
+
+config.yml
+
+prettier.config.js
+
+tsconfig.json
